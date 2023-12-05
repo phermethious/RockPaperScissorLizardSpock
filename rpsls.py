@@ -97,14 +97,20 @@ class Ui_MainWindow(object):
 
         # File Menu
         self.menuFile = self.menubar.addMenu("File")
-        self.actionReset = self.menuFile.addAction("Reset")
         self.actionSave = self.menuFile.addAction("Save")
         self.actionLoad = self.menuFile.addAction("Load")
+        self.actionReset = self.menuFile.addAction("Reset")
         self.actionExit = self.menuFile.addAction("Exit")
         self.actionExit.triggered.connect(MainWindow.close)
         
         # Connect the reset_game method to the Reset menu action
         self.actionReset.triggered.connect(self.reset_game)
+        
+        # Connect the save_game method to the Save menu action
+        self.actionLoad.triggered.connect(self.load_game)
+        
+        # Connect the load_game method to the Load menu action
+        self.actionSave.triggered.connect(self.save_game)
         
         # Help Menu
         self.menuHelp = self.menubar.addMenu("Help")
@@ -243,7 +249,57 @@ class Ui_MainWindow(object):
 
         # Clear funny sayings label
         self.funny_sayings.clear()
+        
+    def save_game(self):
+    # Open a file dialog for the user to choose the file to save
+        file_dialog = QtWidgets.QFileDialog()
+        file_path, _ = file_dialog.getSaveFileName()
+    
+        if file_path:
+            try:
+                with open(file_path, 'w') as file:
+                    # Save relevant game data to the file
+                    file.write(f"Player Score: {self.player_score}\n")
+                    file.write(f"Computer Score: {self.computer_score}\n")
+                    file.write(f"Tie games: {self.tie_game}\n")
 
+                QtWidgets.QMessageBox.information(None, "Game Saved", "Game saved successfully!")
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(None, "Error", f"Error saving game: {str(e)}")
+                
+    def load_game(self):
+    # Open a file dialog for the user to choose the file to load
+        file_dialog = QtWidgets.QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName()
+
+        if file_path:
+            try:
+                with open(file_path, 'r') as file:
+                    # Read the saved game data from the file
+                    lines = file.readlines()
+    
+                    # Extract the player score, computer score, and tie game data
+                    player_score = int(lines[0].split(":")[1].strip())
+                    computer_score = int(lines[1].split(":")[1].strip())
+                    tie_game = int(lines[2].split(":")[1].strip())
+    
+                    # Update the game state with the loaded data
+                    self.player_score = player_score
+                    self.computer_score = computer_score
+                    self.tie_game = tie_game
+    
+                    # Update UI labels
+                    total_games = self.player_score + self.computer_score + self.tie_game
+                    self.games_played_label.setText(f"Games Played: {total_games}")
+    
+                    player_wins = self.player_score
+                    com_wins = self.computer_score
+                    tied_game = self.tie_game
+                    self.results_label.setText(f"Player Score: {player_wins} | Computer Score: {com_wins} | Tie games: {tied_game}")
+    
+                    QtWidgets.QMessageBox.information(None, "Game Loaded", "Game loaded successfully!")
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(None, "Error", f"Error loading game: {str(e)}")
 
 if __name__ == "__main__":
     import sys
