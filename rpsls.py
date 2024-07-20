@@ -1,3 +1,5 @@
+# rpsls.py
+
 import random
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -6,10 +8,14 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
         
+        # Set window title
+        MainWindow.setWindowTitle("Rock Paper Scissors Lizard Spock")
+
         # Initialize scores
         self.player_score = 0
         self.computer_score = 0
         self.tie_game = 0
+        self.win_percentage = 0.0
 
         # Central Widget
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -76,6 +82,17 @@ class Ui_MainWindow(object):
         self.splitter.setFont(font)
         self.splitter.setObjectName("splitter")
 
+        # Win Percentage Label
+        self.win_percentage_label = QtWidgets.QLabel(self.centralwidget)
+        self.win_percentage_label.setGeometry(QtCore.QRect(0, 100, 800, 20))
+        self.win_percentage_label.setObjectName("win_percentage_label")
+        self.win_percentage_label.setAlignment(QtCore.Qt.AlignCenter)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        self.win_percentage_label.setFont(font)
+        self.win_percentage_label.setText("Win Percentage: 0.00%")  # Initial value
+        
         # Buttons
         button_info = {"Rock": "Gray", "Paper": "White", "Scissors": "Silver", "Lizard": "Green", "Spock": "Blue"}
 
@@ -129,8 +146,8 @@ class Ui_MainWindow(object):
         for button in self.buttons:
             button.clicked.connect(lambda checked, btn=button: self.play(btn))
 
-        # self.retranslateUi(MainWindow)
-        # QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        #self.retranslateUi(MainWindow)
+        #QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         def retranslateUi(self, MainWindow):
             _translate = QtCore.QCoreApplication.translate
@@ -216,6 +233,12 @@ class Ui_MainWindow(object):
         self.results_label.setText(f"Player Score: {player_wins} | Computer Score: {com_wins} | Tie games: {tied_game}")
         label_text = f"{result_text} You picked {player_choice}. The computer picked {computer_choice}."
         
+        # Update win percentage label
+        win_percentage = (self.player_score / total_games) * 100 if total_games > 0 else 0
+        self.win_percentage_label.setText(f"Win Percentage: {win_percentage:.2f}%")
+
+        label_text = f"{result_text} You picked {player_choice}. The computer picked {computer_choice}."
+
         # Center label text
         self.outcome_label.setAlignment(QtCore.Qt.AlignCenter)
         self.outcome_label.setText(label_text)
@@ -249,12 +272,15 @@ class Ui_MainWindow(object):
 
         # Clear funny sayings label
         self.funny_sayings.clear()
+
+        # Reset win percentage label
+        self.win_percentage_label.setText("Win Percentage: 0.00%")
         
     def save_game(self):
-    # Open a file dialog for the user to choose the file to save
+        # Open a file dialog for the user to choose the file to save
         file_dialog = QtWidgets.QFileDialog()
         file_path, _ = file_dialog.getSaveFileName()
-    
+
         if file_path:
             try:
                 with open(file_path, 'w') as file:
@@ -262,13 +288,16 @@ class Ui_MainWindow(object):
                     file.write(f"Player Score: {self.player_score}\n")
                     file.write(f"Computer Score: {self.computer_score}\n")
                     file.write(f"Tie games: {self.tie_game}\n")
+                    total_games = self.player_score + self.computer_score + self.tie_game
+                    win_percentage = (self.player_score / total_games) * 100 if total_games > 0 else 0
+                    file.write(f"Win Percentage: {win_percentage:.2f}%\n")
 
                 QtWidgets.QMessageBox.information(None, "Game Saved", "Game saved successfully!")
             except Exception as e:
                 QtWidgets.QMessageBox.critical(None, "Error", f"Error saving game: {str(e)}")
                 
     def load_game(self):
-    # Open a file dialog for the user to choose the file to load
+        # Open a file dialog for the user to choose the file to load
         file_dialog = QtWidgets.QFileDialog()
         file_path, _ = file_dialog.getOpenFileName()
 
@@ -277,29 +306,25 @@ class Ui_MainWindow(object):
                 with open(file_path, 'r') as file:
                     # Read the saved game data from the file
                     lines = file.readlines()
-    
+
                     # Extract the player score, computer score, and tie game data
-                    player_score = int(lines[0].split(":")[1].strip())
-                    computer_score = int(lines[1].split(":")[1].strip())
-                    tie_game = int(lines[2].split(":")[1].strip())
-    
-                    # Update the game state with the loaded data
-                    self.player_score = player_score
-                    self.computer_score = computer_score
-                    self.tie_game = tie_game
-    
+                    self.player_score = int(lines[0].split(":")[1].strip())
+                    self.computer_score = int(lines[1].split(":")[1].strip())
+                    self.tie_game = int(lines[2].split(":")[1].strip())
+                    win_percentage_text = lines[3].split(":")[1].strip().replace('%', '').strip()
+                    self.win_percentage = float(win_percentage_text) if win_percentage_text else 0.0
+
                     # Update UI labels
                     total_games = self.player_score + self.computer_score + self.tie_game
                     self.games_played_label.setText(f"Games Played: {total_games}")
-    
-                    player_wins = self.player_score
-                    com_wins = self.computer_score
-                    tied_game = self.tie_game
-                    self.results_label.setText(f"Player Score: {player_wins} | Computer Score: {com_wins} | Tie games: {tied_game}")
-    
+
+                    self.results_label.setText(f"Player Score: {self.player_score} | Computer Score: {self.computer_score} | Tie games: {self.tie_game}")
+                    self.win_percentage_label.setText(f"Win Percentage: {self.win_percentage:.2f}%")
+
                     QtWidgets.QMessageBox.information(None, "Game Loaded", "Game loaded successfully!")
             except Exception as e:
                 QtWidgets.QMessageBox.critical(None, "Error", f"Error loading game: {str(e)}")
+
 
 if __name__ == "__main__":
     import sys
