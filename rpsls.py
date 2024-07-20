@@ -225,7 +225,7 @@ class Ui_MainWindow(object):
         QtWidgets.QMessageBox.about(
             MainWindow,
             "About",
-            "This was programmed by Brian Wall \n\nCopyright: \xa9 2023"
+            "This Rock Paper Scissor Lizard Spock game \nwas programmed by Brian Wall \n\nCopyright: \xa9 2023. \nLast updated: 7/16/2024"
         )
         
     def reset_game(self):
