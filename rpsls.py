@@ -1,12 +1,11 @@
-from cryptography.fernet import Fernet
-from PyQt5 import QtCore, QtGui, QtWidgets
 import random
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
-
+        
         # Set window title
         MainWindow.setWindowTitle("Rock Paper Scissors Lizard Spock")
 
@@ -14,10 +13,7 @@ class Ui_MainWindow(object):
         self.player_score = 0
         self.computer_score = 0
         self.tie_game = 0
-
-        # Generate a secret key for encryption/decryption
-        self.secret_key = Fernet.generate_key()
-        self.cipher_suite = Fernet(self.secret_key)
+        self.win_percentage = 0.0
 
         # Central Widget
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -148,6 +144,9 @@ class Ui_MainWindow(object):
         for button in self.buttons:
             button.clicked.connect(lambda checked, btn=button: self.play(btn))
 
+        #self.retranslateUi(MainWindow)
+        #QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
         def retranslateUi(self, MainWindow):
             _translate = QtCore.QCoreApplication.translate
             MainWindow.setWindowTitle(_translate("MainWindow", "Rock Paper Scissors Lizard Spock"))
@@ -192,78 +191,89 @@ class Ui_MainWindow(object):
             display = sayings[9]
         elif (player_choice == 'Rock' and computer_choice == 'Scissors') or (computer_choice == 'Rock' and player_choice == 'Scissors'):
             display = sayings[10]
-        elif player_choice == computer_choice:
-            display = sayings[11]
+        else:
+            display = sayings[11]  
 
-        self.funny_sayings.setText(display)
-        
-        # Game logic remains unchanged
-        # Determine winner
-        winner = self.determine_winner(player_choice, computer_choice)
+        # Determine outcome of the game
+        if player_choice == computer_choice:
+            result = "Tie"
+            self.funny_sayings.setText(sayings[11]) 
+        else:
+            self.funny_sayings.setText(display)
 
-        # Update scores and labels
-        if winner == "Player":
+            result = "Win" if (
+                (player_choice == "Rock" and computer_choice in ["Scissors", "Lizard"]) or
+                (player_choice == "Paper" and computer_choice in ["Rock", "Spock"]) or
+                (player_choice == "Scissors" and computer_choice in ["Paper", "Lizard"]) or
+                (player_choice == "Lizard" and computer_choice in ["Paper", "Spock"]) or
+                (player_choice == "Spock" and computer_choice in ["Rock", "Scissors"])
+            ) else "Lose"
+    
+        # Update score and label text
+        if result == "Win":
             self.player_score += 1
-            result_text = "Player wins!"
-        elif winner == "Computer":
+            result_text = "You win!"
+        elif result == "Lose":
             self.computer_score += 1
             result_text = "Computer wins!"
         else:
+            result_text = "Tie game."
             self.tie_game += 1
-            result_text = "It's a tie!"
-
+            
+        # Update games played label
         total_games = self.player_score + self.computer_score + self.tie_game
         self.games_played_label.setText(f"Games Played: {total_games}")
-
+    
+        # Update results label
         player_wins = self.player_score
         com_wins = self.computer_score
         tied_game = self.tie_game
         self.results_label.setText(f"Player Score: {player_wins} | Computer Score: {com_wins} | Tie games: {tied_game}")
         label_text = f"{result_text} You picked {player_choice}. The computer picked {computer_choice}."
         
+        # Update win percentage label
+        win_percentage = (self.player_score / total_games) * 100 if total_games > 0 else 0
+        self.win_percentage_label.setText(f"Win Percentage: {win_percentage:.2f}%")
+
+        label_text = f"{result_text} You picked {player_choice}. The computer picked {computer_choice}."
+
         # Center label text
         self.outcome_label.setAlignment(QtCore.Qt.AlignCenter)
         self.outcome_label.setText(label_text)
-        win_percentage = (self.player_score / total_games * 100) if total_games > 0 else 0
-        self.win_percentage_label.setText(f"Win Percentage: {win_percentage:.2f}%")
-
-        self.outcome_label.setText(label_text)
     
-    def determine_winner(self, player_choice, computer_choice):
-        # Win conditions for player
-        win_conditions = {
-            "Rock": ["Scissors", "Lizard"],
-            "Paper": ["Rock", "Spock"],
-            "Scissors": ["Paper", "Lizard"],
-            "Lizard": ["Spock", "Paper"],
-            "Spock": ["Scissors", "Rock"]
-        }
-        
-        if player_choice == computer_choice:
-            return "Tie"
-        elif computer_choice in win_conditions[player_choice]:
-            return "Player"
-        else:
-            return "Computer"
-
-     # Config About menu    
+    # Config About menu    
     def show_about_dialog(self, MainWindow):
         QtWidgets.QMessageBox.about(
             MainWindow,
             "About",
             "This Rock Paper Scissor Lizard Spock game \nwas programmed by Brian Wall \n\nCopyright: \xa9 2023. \nLast updated: 7/16/2024"
         )
-
+        
     def reset_game(self):
+        # Reset scores
         self.player_score = 0
         self.computer_score = 0
         self.tie_game = 0
-        self.games_played_label.setText("Games Played: 0")
-        self.results_label.setText(f"Player Score: 0 | Computer Score: 0 | Tie games: 0")
-        self.win_percentage_label.setText("Win Percentage: 0.00%")
-        self.funny_sayings.setText("")
-        self.outcome_label.setText("")
 
+        # Update games played label
+        total_games = self.player_score + self.computer_score + self.tie_game
+        self.games_played_label.setText(f"Games Played: {total_games}")
+
+        # Update results label
+        player_wins = self.player_score
+        com_wins = self.computer_score
+        tied_game = self.tie_game
+        self.results_label.setText(f"Player Score: {player_wins} | Computer Score: {com_wins} | Tie games: {tied_game}")
+
+        # Clear outcome label
+        self.outcome_label.clear()
+
+        # Clear funny sayings label
+        self.funny_sayings.clear()
+
+        # Reset win percentage label
+        self.win_percentage_label.setText("Win Percentage: 0.00%")
+        
     def save_game(self):
         # Open a file dialog for the user to choose the file to save
         file_dialog = QtWidgets.QFileDialog()
@@ -271,19 +281,15 @@ class Ui_MainWindow(object):
 
         if file_path:
             try:
-                # Prepare the data to be saved
-                data = f"Player Score: {self.player_score}\n"
-                data += f"Computer Score: {self.computer_score}\n"
-                data += f"Tie games: {self.tie_game}\n"
-                data += f"Win Percentage: {(self.player_score / (self.player_score + self.computer_score + self.tie_game) * 100) if (self.player_score + self.computer_score + self.tie_game) > 0 else 0:.2f}\n"
-                
-                # Encrypt the data
-                encrypted_data = self.cipher_suite.encrypt(data.encode())
-                
-                with open(file_path, 'wb') as file:
-                    # Save the encrypted data to the file
-                    file.write(encrypted_data)
-                
+                with open(file_path, 'w') as file:
+                    # Save relevant game data to the file
+                    file.write(f"Player Score: {self.player_score}\n")
+                    file.write(f"Computer Score: {self.computer_score}\n")
+                    file.write(f"Tie games: {self.tie_game}\n")
+                    total_games = self.player_score + self.computer_score + self.tie_game
+                    win_percentage = (self.player_score / total_games) * 100 if total_games > 0 else 0
+                    file.write(f"Win Percentage: {win_percentage:.2f}%\n")
+
                 QtWidgets.QMessageBox.information(None, "Game Saved", "Game saved successfully!")
             except Exception as e:
                 QtWidgets.QMessageBox.critical(None, "Error", f"Error saving game: {str(e)}")
@@ -295,38 +301,28 @@ class Ui_MainWindow(object):
 
         if file_path:
             try:
-                with open(file_path, 'rb') as file:
-                    # Read the encrypted data from the file
-                    encrypted_data = file.read()
+                with open(file_path, 'r') as file:
+                    # Read the saved game data from the file
+                    lines = file.readlines()
 
-                # Decrypt the data
-                decrypted_data = self.cipher_suite.decrypt(encrypted_data).decode()
-                
-                # Parse the decrypted data
-                lines = decrypted_data.split('\n')
-                player_score = int(lines[0].split(":")[1].strip())
-                computer_score = int(lines[1].split(":")[1].strip())
-                tie_game = int(lines[2].split(":")[1].strip())
-                win_percent = float(lines[3].split(":")[1].strip())
-                
-                # Update the game state with the loaded data
-                self.player_score = player_score
-                self.computer_score = computer_score
-                self.tie_game = tie_game
+                    # Extract the player score, computer score, and tie game data
+                    self.player_score = int(lines[0].split(":")[1].strip())
+                    self.computer_score = int(lines[1].split(":")[1].strip())
+                    self.tie_game = int(lines[2].split(":")[1].strip())
+                    win_percentage_text = lines[3].split(":")[1].strip().replace('%', '').strip()
+                    self.win_percentage = float(win_percentage_text) if win_percentage_text else 0.0
 
-                # Update UI labels
-                total_games = self.player_score + self.computer_score + self.tie_game
-                self.games_played_label.setText(f"Games Played: {total_games}")
+                    # Update UI labels
+                    total_games = self.player_score + self.computer_score + self.tie_game
+                    self.games_played_label.setText(f"Games Played: {total_games}")
 
-                player_wins = self.player_score
-                com_wins = self.computer_score
-                tied_game = self.tie_game
-                self.results_label.setText(f"Player Score: {player_wins} | Computer Score: {com_wins} | Tie games: {tied_game}")
-                self.win_percentage_label.setText(f"Win Percentage: {win_percent:.2f}%")
+                    self.results_label.setText(f"Player Score: {self.player_score} | Computer Score: {self.computer_score} | Tie games: {self.tie_game}")
+                    self.win_percentage_label.setText(f"Win Percentage: {self.win_percentage:.2f}%")
 
-                QtWidgets.QMessageBox.information(None, "Game Loaded", "Game loaded successfully!")
+                    QtWidgets.QMessageBox.information(None, "Game Loaded", "Game loaded successfully!")
             except Exception as e:
                 QtWidgets.QMessageBox.critical(None, "Error", f"Error loading game: {str(e)}")
+
 
 if __name__ == "__main__":
     import sys
