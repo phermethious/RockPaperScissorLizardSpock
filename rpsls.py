@@ -116,6 +116,8 @@ class Ui_MainWindow(object):
         self.actionLoad = self.menuFile.addAction("Load")
         self.actionReset = self.menuFile.addAction("Reset")
         self.actionExit = self.menuFile.addAction("Exit")
+        
+        # Connect the exit method to the Exit menu action
         self.actionExit.triggered.connect(MainWindow.close)
         
         # Connect the reset_game method to the Reset menu action
